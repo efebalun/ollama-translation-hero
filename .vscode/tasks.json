@@ -1,0 +1,47 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "TH: Setup venv",
+      "type": "shell",
+      "command": "[ -d .venv ] || python3 -m venv .venv && .venv/bin/pip install -q -r requirements.txt",
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "always", "panel": "shared", "group": "translationhero" },
+      "problemMatcher": []
+    },
+    {
+      "label": "TH: Start Server",
+      "type": "shell",
+      "command": "source .venv/bin/activate && python run.py --reload",
+      "options": { "cwd": "${workspaceFolder}" },
+      "dependsOn": "TH: Setup venv",
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "group": "translationhero",
+        "focus": true
+      },
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^ERROR",
+          "message": 1
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "TranslationHero",
+          "endsPattern": "Application startup complete\\."
+        }
+      }
+    },
+    {
+      "label": "TH: Run",
+      "dependsOn": ["TH: Start Server"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    }
+  ]
+}

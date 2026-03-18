@@ -1,0 +1,29 @@
+{
+  "name": "example",
+  "languages_dir": "languages",
+  "master_lang": "en",
+  "ollama_url": "http://localhost:11434",
+  "model": "gpt-oss:20b",
+  "batch_size": 25,
+  "skip_langs": [],
+  "languages": {
+    "en": {
+      "code": "en",
+      "name": "English",
+      "file": "en.ts",
+      "is_master": true
+    },
+    "fr": {
+      "code": "fr",
+      "name": "French",
+      "file": "fr.ts",
+      "is_master": false
+    },
+    "tr": {
+      "code": "tr",
+      "name": "Turkish",
+      "file": "tr.ts",
+      "is_master": false
+    }
+  }
+}

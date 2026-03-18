@@ -1,0 +1,22 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# Projects
+data/input/*
+!data/input/example/
+!data/input/example/**
+
+# Output files (generated, not tracked)
+data/output/
+
+# macOS
+.DS_Store
+
+# VS Code (keep tasks.json, ignore personal settings)
+.vscode/settings.json
+.vscode/launch.json

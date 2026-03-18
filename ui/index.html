@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TranslationHero</title>
+    <style>
+      :root {
+        --bg: #0f0f13;
+        --surface: #1a1a24;
+        --surface2: #22223a;
+        --accent: #ff6a00;
+        --accent2: #ffa200;
+        --text: #e8e8f0;
+        --muted: #888899;
+        --border: #2a2a3e;
+        --success: #34d399;
+        --warn: #fbbf24;
+        --error: #f87171;
+        --running: #60a5fa;
+        --radius: 10px;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-size: 14px;
+        min-height: 100vh;
+      }
+
+      /* Layout */
+      .layout {
+        display: flex;
+        min-height: 100vh;
+      }
+      .sidebar {
+        position: sticky;
+        top: 0;
+        width: 240px;
+        min-width: 240px;
+        height: 100vh;
+        height: 100dvh;
+        background: var(--surface);
+        border-right: 1px solid var(--border);
+        padding: 20px 0;
+        display: flex;
+        flex-direction: column;
+      }
+      .main {
+        flex: 1;
+        overflow-y: auto;
+      }
+
+      /* Sidebar */
+      .logo {
+        padding: 0 20px 20px;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 12px;
+      }
+      .logo h1 {
+        font-size: 18px;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .logo small {
+        color: var(--muted);
+        font-size: 11px;
+        display: block;
+        margin-top: 2px;
+      }
+
+      .nav-section {
+        padding: 8px 12px 4px;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 20px;
+        cursor: pointer;
+        color: var(--muted);
+        transition: all 0.15s;
+        border-left: 3px solid transparent;
+      }
+      .nav-item:hover {
+        background: var(--surface2);
+        color: var(--text);
+      }
+      .nav-item.active {
+        background: var(--surface2);
+        color: var(--text);
+        border-left-color: var(--accent);
+      }
+      .nav-item .icon {
+        font-size: 16px;
+        width: 20px;
+        text-align: center;
+      }
+      .nav-item .label {
+        flex: 1;
+        font-size: 13px;
+      }
+      .nav-item .badge {
+        background: var(--accent);
+        color: white;
+        font-size: 10px;
+        padding: 1px 6px;
+        border-radius: 99px;
+      }
+
+      /* Pages */
+      .page {
+        display: none;
+        padding: 32px;
+        max-width: 1300px;
+      }
+      .page.active {
+        display: block;
+      }
+
+      /* Page header */
+      .page-header {
+        margin-bottom: 28px;
+      }
+      .page-header h2 {
+        font-size: 24px;
+        font-weight: 700;
+      }
+      .page-header p {
+        color: var(--muted);
+        margin-top: 6px;
+        font-size: 13px;
+      }
+
+      /* Cards */
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 20px;
+        margin-bottom: 16px;
+      }
+      .card-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-bottom: 14px;
+      }
+
+      /* Buttons */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        border-radius: 7px;
+        border-style: solid;
+        border-width: 1px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+        transition: all 0.15s;
+        text-decoration: none;
+      }
+      .btn-primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: white;
+      }
+      .btn-primary:hover {
+        background: var(--accent2);
+        border-color: var(--accent2);
+      }
+      .btn-secondary {
+        color: var(--text);
+        background: var(--surface);
+        border-color: var(--border);
+      }
+      .btn-secondary:hover {
+        background: var(--surface2);
+      }
+      .btn-danger {
+        background: #3a1f1f;
+        color: var(--error);
+        border: 1px solid #5a2a2a;
+      }
+      .btn-danger:hover {
+        background: #4a2a2a;
+      }
+      .btn-sm {
+        padding: 5px 10px;
+        font-size: 12px;
+      }
+      .btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      /* Status badges */
+      .status {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 9px;
+        border-radius: 99px;
+        font-size: 11px;
+        font-weight: 600;
+      }
+      .status-idle {
+        background: #1e1e2e;
+        color: var(--muted);
+      }
+      .status-running {
+        background: #1a2a3a;
+        color: var(--running);
+      }
+      .status-done {
+        background: #1a3a2a;
+        color: var(--success);
+      }
+      .status-error {
+        background: #3a1a1a;
+        color: var(--error);
+      }
+      .status-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+      .status-running .status-dot {
+        animation: pulse 1.2s infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.3;
+        }
+      }
+
+      /* Progress bar */
+      .progress-wrap {
+        height: 6px;
+        background: var(--surface2);
+        border-radius: 99px;
+        overflow: hidden;
+        margin-top: 8px;
+      }
+      .progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, var(--accent), var(--accent2));
+        border-radius: 99px;
+        transition: width 0.4s ease;
+      }
+
+      /* Table */
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th {
+        padding: 10px 14px;
+        text-align: left;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        border-bottom: 1px solid var(--border);
+      }
+      td {
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--border);
+        font-size: 13px;
+        vertical-align: middle;
+      }
+      tr:last-child td {
+        border-bottom: none;
+      }
+      tr:hover td {
+        background: rgba(108, 99, 255, 0.04);
+      }
+
+      /* Form */
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 16px;
+      }
+      .form-row.full {
+        grid-template-columns: 1fr;
+      }
+      label {
+        display: block;
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--muted);
+        margin-bottom: 5px;
+      }
+      input,
+      select {
+        width: 100%;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        color: var(--text);
+        padding: 8px 12px;
+        border-radius: 7px;
+        font-size: 13px;
+      }
+      input:focus,
+      select:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+
+      /* Alert */
+      .alert {
+        padding: 12px 16px;
+        border-radius: 7px;
+        font-size: 13px;
+        margin-bottom: 16px;
+      }
+      .alert-success {
+        background: #1a3a2a;
+        color: var(--success);
+        border: 1px solid #2a5a3a;
+      }
+      .alert-error {
+        background: #3a1a1a;
+        color: var(--error);
+        border: 1px solid #5a2a2a;
+      }
+      .alert-info {
+        background: #1a2a3a;
+        color: var(--running);
+        border: 1px solid #2a4a5a;
+      }
+
+      /* Flex helpers */
+      .flex {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .flex-between {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .flex-wrap {
+        flex-wrap: wrap;
+      }
+      .gap-8 {
+        gap: 8px;
+      }
+
+      /* Project selector */
+      .project-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 24px;
+      }
+
+      /* Stats row */
+      .stats-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+      .stat-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 16px;
+      }
+      .stat-val {
+        font-size: 28px;
+        font-weight: 700;
+      }
+      .stat-label {
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 4px;
+      }
+
+      /* Scrollbar */
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 99px;
+      }
+
+      /* Tooltip */
+      [title] {
+        cursor: help;
+      }
+
+      /* Connection indicator */
+      #ollama-indicator {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        font-size: 11px;
+        border-radius: 99px;
+      }
+      .conn-ok {
+        background: #1a3a2a;
+        color: var(--success);
+      }
+      .conn-fail {
+        background: #3a1a1a;
+        color: var(--error);
+      }
+      .conn-checking {
+        background: #1a2a3a;
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="layout">
+      <!-- SIDEBAR -->
+      <nav class="sidebar">
+        <div class="logo">
+          <h1>TranslationHero</h1>
+          <small>Ollama · Local · Fast</small>
+        </div>
+        <div class="nav-section">Workspace</div>
+        <div class="nav-item active" data-page="dashboard" onclick="showPage('dashboard')">
+          <span class="icon">⚡</span><span class="label">Dashboard</span>
+        </div>
+        <div class="nav-item" data-page="translate" onclick="showPage('translate')">
+          <span class="icon">🌐</span><span class="label">Translate</span>
+        </div>
+        <div class="nav-item" data-page="settings" onclick="showPage('settings')">
+          <span class="icon">⚙️</span><span class="label">Settings</span>
+        </div>
+        <div style="flex: 1"></div>
+        <div style="padding: 12px 16px; border-top: 1px solid var(--border)">
+          <div id="ollama-indicator" class="conn-checking">
+            <span class="status-dot" style="background: currentColor; width: 6px; height: 6px; border-radius: 50%; display: inline-block"></span>
+            <span id="ollama-status-text">Checking...</span>
+          </div>
+        </div>
+      </nav>
+      <!-- MAIN -->
+      <main class="main">
+        <!-- DASHBOARD -->
+        <div id="page-dashboard" class="page active">
+          <div class="project-tabs" id="dash-project-tabs"></div>
+          <div class="page-header">
+            <h2>Dashboard</h2>
+            <p>Overview of all projects and translation progress</p>
+          </div>
+          <div id="dashboard-projects-loading" class="alert alert-info">Loading projects...</div>
+          <div id="dashboard-content" style="display: none">
+            <div class="stats-row" id="dash-stats"></div>
+            <div class="card">
+              <div class="card-title">Languages</div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Language</th>
+                      <th>Code</th>
+                      <th>Status</th>
+                      <th>Progress</th>
+                      <th>Keys</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="dash-lang-table">
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- TRANSLATE -->
+        <div id="page-translate" class="page">
+          <div class="project-tabs" id="trans-project-tabs"></div>
+          <div class="page-header">
+            <h2>Translate</h2>
+            <p>Run translations for individual languages or the whole project</p>
+          </div>
+          <div id="translate-projects-loading" class="alert alert-info">Loading projects...</div>
+          <div id="translate-content" style="display: none">
+            <div class="flex-between" style="margin-bottom: 16px">
+              <div class="flex gap-8">
+                <button class="btn btn-primary" onclick="translateAll()">▶ Translate All Pending</button>
+                <button class="btn btn-secondary" onclick="refreshTranslateStatus()">↻ Refresh</button>
+              </div>
+              <div class="flex gap-8">
+                <label style="margin: 0; color: var(--text)">Batch size:</label>
+                <input id="batch-size-input" type="number" value="25" min="5" max="100" style="width: 70px" />
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-title">Translation Jobs</div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Language</th>
+                      <th>Status</th>
+                      <th>Progress</th>
+                      <th>%</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="trans-lang-table">
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- SETTINGS -->
+        <div id="page-settings" class="page">
+          <div class="project-tabs" id="settings-project-tabs"></div>
+          <div class="page-header">
+            <h2>Settings</h2>
+            <p>Configure project settings, master language, and Ollama connection</p>
+          </div>
+          <div id="settings-projects-loading" class="alert alert-info">Loading projects...</div>
+          <div id="settings-content" style="display: none">
+            <div class="card" id="settings-form-card">
+              <div class="card-title">Project Configuration</div>
+              <div id="settings-alert" style="display: none"></div>
+              <div class="form-row">
+                <div>
+                  <label>Master Language (reference file)</label>
+                  <select id="cfg-master-lang"></select>
+                </div>
+                <div>
+                  <label>Skip Languages (comma-separated codes)</label>
+                  <input id="cfg-skip-langs" type="text" placeholder="e.g. en,ar" />
+                </div>
+              </div>
+              <div class="form-row">
+                <div>
+                  <label>Ollama URL</label>
+                  <input id="cfg-ollama-url" type="text" placeholder="http://localhost:11434" oninput="" />
+                </div>
+                <div>
+                  <label>Model</label>
+                  <input id="cfg-model" type="text" placeholder="gpt-oss:20b" />
+                </div>
+              </div>
+              <div class="form-row">
+                <div>
+                  <label>Batch Size (keys per request)</label>
+                  <input id="cfg-batch-size" type="number" min="5" max="100" value="25" />
+                </div>
+                <div></div>
+              </div>
+              <div class="flex gap-8">
+                <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+                <button class="btn btn-secondary" onclick="testOllama()">Test Connection</button>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-title">Available Models</div>
+              <div id="models-list" style="color: var(--muted); font-size: 13px">Click "Test Connection" to load available models.</div>
+            </div>
+            <div class="card">
+              <div class="flex-between" style="margin-bottom: 14px">
+                <div class="card-title" style="margin: 0">Languages in Project</div>
+                <button class="btn btn-primary btn-sm" onclick="openNewLangModal()">+ New Language</button>
+              </div>
+              <div id="settings-lang-list" style="color: var(--muted); font-size: 13px">Loading...</div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+    <!-- NEW LANGUAGE MODAL -->
+    <div id="modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.65); z-index: 100; align-items: center; justify-content: center">
+      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; width: 380px; max-width: 95vw">
+        <h3 style="margin-bottom: 18px; font-size: 16px">Add New Language</h3>
+        <div id="modal-alert" style="display: none; margin-bottom: 12px"></div>
+        <div style="margin-bottom: 14px">
+          <label>
+            Language Code <span style="color: var(--muted); font-size: 11px">(e.g. de, es, zh)</span>
+          </label>
+          <input id="new-lang-code" type="text" placeholder="de" maxlength="10" style="margin-top: 5px" />
+        </div>
+        <div style="margin-bottom: 20px">
+          <label>
+            Language Name <span style="color: var(--muted); font-size: 11px">(optional — auto-detected from code)</span>
+          </label>
+          <input id="new-lang-name" type="text" placeholder="German" style="margin-top: 5px" />
+        </div>
+        <div class="flex gap-8">
+          <button class="btn btn-primary" onclick="createLanguage()">Create</button>
+          <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        </div>
+      </div>
+    </div>
+    <script>
+      // ---------------------------------------------------------------------------
+      // State
+      // ---------------------------------------------------------------------------
+      let projects = [];
+      let currentProject = null;
+      let pollInterval = null;
+      let diffData = {}; // { lang_code: { new_keys: N, total_keys: N } }
+
+      function _readURL() {
+        const p = new URLSearchParams(location.search);
+        return {project: p.get("project"), page: p.get("page")};
+      }
+
+      function _pushURL(project, page) {
+        const url = `?project=${encodeURIComponent(project)}&page=${encodeURIComponent(page)}`;
+        history.pushState({project, page}, "", url);
+      }
+
+      async function loadProjects() {
+        try {
+          const res = await fetch("/api/projects");
+          projects = await res.json();
+          const {project: urlProject, page: urlPage} = _readURL();
+          if (urlProject && projects.find((p) => p.name === urlProject)) {
+            currentProject = urlProject;
+          } else if (projects.length > 0) {
+            currentProject = projects[0].name;
+          }
+          renderAll();
+          // Restore page from URL after render
+          const page = urlPage && ["dashboard", "translate", "settings"].includes(urlPage) ? urlPage : "dashboard";
+          if (page !== "dashboard") showPage(page, false);
+        } catch (e) {
+          showGlobalError("Could not connect to backend: " + e.message);
+        }
+      }
+
+      function renderAll() {
+        const noProjects = projects.length === 0;
+
+        // Dashboard
+        document.getElementById("dashboard-projects-loading").style.display = noProjects ? "block" : "none";
+        document.getElementById("dashboard-content").style.display = noProjects ? "none" : "block";
+
+        // Translate
+        document.getElementById("translate-projects-loading").style.display = noProjects ? "block" : "none";
+        document.getElementById("translate-content").style.display = noProjects ? "none" : "block";
+
+        // Settings
+        document.getElementById("settings-projects-loading").style.display = noProjects ? "block" : "none";
+        document.getElementById("settings-content").style.display = noProjects ? "none" : "block";
+
+        if (noProjects) return;
+
+        renderProjectTabs("dash-project-tabs", refreshDashboard);
+        renderProjectTabs("trans-project-tabs", refreshTranslateStatus);
+        renderProjectTabs("settings-project-tabs", loadSettingsForm);
+
+        refreshDashboard();
+        loadSettingsForm();
+      }
+
+      // ---------------------------------------------------------------------------
+      // Project tabs
+      // ---------------------------------------------------------------------------
+      function renderProjectTabs(containerId, onSelect) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = "Projects: " + projects
+          .map(
+            (p) =>
+              `<div class="project-tab btn btn-sm ${p.name === currentProject ? "btn-primary" : "btn-secondary"}" onclick="selectProject('${p.name}', '${containerId}', arguments[0])">${p.name}</div>`,
+          )
+          .join("");
+      }
+
+      function selectProject(name, tabsId, e) {
+        currentProject = name;
+        document.querySelectorAll(`#${tabsId} .project-tab`).forEach((t) => t.classList.remove("btn-primary", "btn-secondary"));
+        e.target.classList.add("btn-primary");
+
+        // Also sync other tab groups
+        ["dash-project-tabs", "trans-project-tabs", "settings-project-tabs"].forEach((id) => {
+          document.querySelectorAll(`#${id} .project-tab`).forEach((t) => {
+            if (t.textContent.trim() === name) {
+              t.classList.add("btn-primary");
+              t.classList.remove("btn-secondary");
+            } else {
+              t.classList.add("btn-secondary");
+              t.classList.remove("btn-primary");
+            }
+          });
+        });
+
+        const currentPage = document.querySelector(".nav-item.active")?.dataset.page || "dashboard";
+        _pushURL(name, currentPage);
+
+        refreshDashboard();
+        refreshTranslateStatus();
+        loadSettingsForm();
+        checkOllama();
+      }
+
+      // ---------------------------------------------------------------------------
+      // Dashboard
+      // ---------------------------------------------------------------------------
+      async function refreshDashboard() {
+        if (!currentProject) return;
+        try {
+          const [status, diff] = await Promise.all([
+            fetch(`/api/projects/${currentProject}/status`).then((r) => r.json()),
+            fetch(`/api/projects/${currentProject}/diff`)
+              .then((r) => r.json())
+              .catch(() => ({})),
+          ]);
+          diffData = diff;
+          renderDashStats(status);
+          renderDashTable(status);
+
+          // Auto-poll if any language is running
+          const hasRunning = Object.values(status).some((s) => s.status === "running");
+          if (hasRunning && !pollInterval) {
+            pollInterval = setInterval(refreshDashboard, 2000);
+          } else if (!hasRunning && pollInterval) {
+            clearInterval(pollInterval);
+            pollInterval = null;
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      function renderDashStats(statusMap) {
+        const langs = Object.values(statusMap);
+        const total = langs.length;
+        const done = langs.filter((l) => l.status === "done").length;
+        const running = langs.filter((l) => l.status === "running").length;
+        const totalKeys = langs[0]?.total_keys || 0;
+        const totalTranslated = langs.reduce((s, l) => s + (l.translated_keys || 0), 0);
+
+        document.getElementById("dash-stats").innerHTML = `
+              <div class="stat-card"><div class="stat-val">${total}</div><div class="stat-label">Languages</div></div>
+              <div class="stat-card"><div class="stat-val" style="color:var(--success)">${done}</div><div class="stat-label">Completed</div></div>
+              <div class="stat-card"><div class="stat-val" style="color:var(--running)">${running}</div><div class="stat-label">Running</div></div>
+              <div class="stat-card"><div class="stat-val">${totalKeys}</div><div class="stat-label">Total Keys</div></div>
+            `;
+      }
+
+      function renderDashTable(statusMap) {
+        const tbody = document.getElementById("dash-lang-table");
+        tbody.innerHTML = Object.entries(statusMap)
+          .map(([code, lang]) => {
+            const pct = lang.percent || 0;
+            const done = lang.progress?.done || 0;
+            const total = lang.progress?.total || lang.total_keys || 0;
+            const newKeys = diffData[code]?.new_keys || 0;
+            const newBadge = newKeys > 0 && lang.status !== "running" ? `<span style="background:#2a1a3a;color:var(--accent2);font-size:10px;padding:2px 7px;border-radius:99px;margin-left:6px" title="${newKeys} new keys in master not yet translated">+${newKeys} new</span>` : "";
+            return `<tr>
+                <td><strong>${lang.name || code}</strong>${newBadge}</td>
+                <td><code style="color:var(--accent2);font-size:11px">${code}</code></td>
+                <td>${statusBadge(lang.status)}</td>
+                <td style="min-width:150px">
+                  <div class="flex" style="gap:8px">
+                    <div class="progress-wrap" style="flex:1"><div class="progress-bar" style="width:${pct}%"></div></div>
+                    <span style="font-size:11px;color:var(--muted);min-width:30px">${pct}%</span>
+                  </div>
+                </td>
+                <td style="color:var(--muted);font-size:12px">${lang.translated_keys || 0} / ${lang.total_keys || 0}</td>
+                <td>
+                  <div class="flex gap-8">
+                    ${
+                      lang.status === "done" && newKeys === 0
+                        ? `<button class="btn btn-secondary btn-sm" onclick="writeOutput('${code}', '${(lang.name || code).replace(/'/g, "\\'")}')" >💾 Write</button>`
+                        : lang.status === "running"
+                          ? `<button class="btn btn-danger btn-sm" onclick="stopLang('${code}')">⏹ Stop</button>`
+                          : newKeys > 0
+                            ? `<button class="btn btn-primary btn-sm" onclick="translateLang('${code}')">⟳ Sync ${newKeys} new</button>`
+                            : `<button class="btn btn-primary btn-sm" onclick="translateLang('${code}')">▶ Translate</button>`
+                    }
+                    ${lang.error ? `<span style="color:var(--error);font-size:11px" title="${lang.error}">⚠ Error</span>` : ""}
+                  </div>
+                </td>
+              </tr>`;
+          })
+          .join("");
+      }
+
+      function statusBadge(status) {
+        const map = {
+          idle: "status-idle",
+          running: "status-running",
+          done: "status-done",
+          error: "status-error",
+        };
+        const labels = {
+          idle: "Idle",
+          running: "Running",
+          done: "Done",
+          error: "Error",
+        };
+        return `<span class="status ${map[status] || "status-idle"}"><span class="status-dot"></span>${labels[status] || status}</span>`;
+      }
+
+      // ---------------------------------------------------------------------------
+      // Translate page
+      // ---------------------------------------------------------------------------
+      async function refreshTranslateStatus() {
+        if (!currentProject) return;
+        try {
+          const [status, diff] = await Promise.all([
+            fetch(`/api/projects/${currentProject}/status`).then((r) => r.json()),
+            fetch(`/api/projects/${currentProject}/diff`)
+              .then((r) => r.json())
+              .catch(() => ({})),
+          ]);
+          diffData = diff;
+          renderTransTable(status);
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      function renderTransTable(statusMap) {
+        const tbody = document.getElementById("trans-lang-table");
+        tbody.innerHTML = Object.entries(statusMap)
+          .map(([code, lang]) => {
+            const pct = lang.percent || 0;
+            const done = lang.progress?.done || 0;
+            const total = lang.progress?.total || lang.total_keys || 0;
+            const newKeys = diffData[code]?.new_keys || 0;
+            const newBadge = newKeys > 0 && lang.status !== "running" ? `<span style="background:#2a1a3a;color:var(--accent2);font-size:10px;padding:2px 7px;border-radius:99px;margin-left:6px">+${newKeys} new</span>` : "";
+            return `<tr>
+                <td><strong>${lang.name || code}</strong>${newBadge} <code style="color:var(--muted);font-size:11px">${code}</code></td>
+                <td>${statusBadge(lang.status)}</td>
+                <td style="min-width:200px">
+                  <div class="flex" style="gap:8px">
+                    <div class="progress-wrap" style="flex:1"><div class="progress-bar" style="width:${pct}%"></div></div>
+                    <span style="font-size:11px;color:var(--muted)">${done}/${total}</span>
+                  </div>
+                  ${lang.error ? `<div style="color:var(--error);font-size:11px;margin-top:4px">⚠ ${lang.error}</div>` : ""}
+                </td>
+                <td><strong>${pct}%</strong></td>
+                <td>
+                  <div class="flex gap-8">
+                    ${lang.status === "running" ? `<button class="btn btn-danger btn-sm" onclick="stopLang('${code}')">⏹ Stop</button>` : newKeys > 0 ? `<button class="btn btn-primary btn-sm" onclick="translateLang('${code}')">⟳ Sync ${newKeys} new</button>` : `<button class="btn btn-primary btn-sm" onclick="translateLang('${code}')">▶ ${lang.translated_keys > 0 ? "Resume" : "Start"}</button>`}
+                    <button class="btn btn-secondary btn-sm" onclick="writeOutput('${code}', '${(lang.name || code).replace(/'/g, "\\'")}')" >💾 Write</button>
+                    <button class="btn btn-danger btn-sm" onclick="resetLang('${code}', '${(lang.name || code).replace(/'/g, "\\'")}')" >🗑 Reset</button>
+                  </div>
+                </td>
+              </tr>`;
+          })
+          .join("");
+      }
+
+      // ---------------------------------------------------------------------------
+      // Translation actions
+      // ---------------------------------------------------------------------------
+      async function translateAll() {
+        const batchSize = parseInt(document.getElementById("batch-size-input")?.value || "25");
+        await updateBatchSize(batchSize);
+        await fetch(`/api/projects/${currentProject}/translate`, {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({resume: true}),
+        });
+        setTimeout(() => {
+          refreshTranslateStatus();
+          refreshDashboard();
+        }, 500);
+        startPolling();
+      }
+
+      async function translateLang(code) {
+        const batchSize = parseInt(document.getElementById("batch-size-input")?.value || "25");
+        await updateBatchSize(batchSize);
+        await fetch(`/api/projects/${currentProject}/translate`, {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({lang_codes: [code], resume: true}),
+        });
+        setTimeout(() => {
+          refreshTranslateStatus();
+          refreshDashboard();
+        }, 500);
+        startPolling();
+      }
+
+      async function stopLang(code) {
+        await fetch(`/api/projects/${currentProject}/translate/${code}/stop`, {method: "POST"});
+        setTimeout(() => {
+          refreshTranslateStatus();
+          refreshDashboard();
+        }, 500);
+      }
+
+      async function resetLang(code, name) {
+        const displayName = name || code;
+        if (!confirm(`⚠️ Reset "${displayName}" (${code})?\n\nThis will permanently erase ALL saved translations for this language and cannot be undone.`)) return;
+        const typed = prompt(`To confirm, type the language code: ${code}`);
+        if (typed === null) return;
+        if (typed.trim() !== code) {
+          alert(`❌ Code did not match. Reset cancelled.`);
+          return;
+        }
+        await fetch(`/api/projects/${currentProject}/translate/${code}/reset`, {method: "POST"});
+        setTimeout(() => {
+          refreshTranslateStatus();
+          refreshDashboard();
+        }, 300);
+      }
+
+      async function writeOutput(code, name) {
+        const displayName = name || code;
+        if (!confirm(`Write output file for "${displayName}" (${code})?\n\nThis will overwrite the existing output file in data/output/.`)) return;
+        const typed = prompt(`To confirm, type the language code: ${code}`);
+        if (typed === null) return;
+        if (typed.trim() !== code) {
+          alert(`❌ Code did not match. Write cancelled.`);
+          return;
+        }
+        try {
+          const r = await fetch(`/api/projects/${currentProject}/write/${code}`, {method: "POST"});
+          const data = await r.json();
+          if (r.ok) {
+            alert(`✅ Written: ${data.written}`);
+          } else {
+            alert(`Error: ${data.detail}`);
+          }
+        } catch (e) {
+          alert("Error writing file: " + e.message);
+        }
+      }
+
+      async function updateBatchSize(size) {
+        const cfg = await fetch(`/api/projects/${currentProject}`).then((r) => r.json());
+        if (cfg.config?.batch_size !== size) {
+          await fetch(`/api/projects/${currentProject}/config`, {
+            method: "PATCH",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({batch_size: size}),
+          });
+        }
+      }
+
+      function startPolling() {
+        if (pollInterval) return;
+        pollInterval = setInterval(async () => {
+          await refreshDashboard();
+          await refreshTranslateStatus();
+          const status = await fetch(`/api/projects/${currentProject}/status`)
+            .then((r) => r.json())
+            .catch(() => ({}));
+          const hasRunning = Object.values(status).some((s) => s.status === "running");
+          if (!hasRunning) {
+            clearInterval(pollInterval);
+            pollInterval = null;
+          }
+        }, 2500);
+      }
+
+      // ---------------------------------------------------------------------------
+      // Settings
+      // ---------------------------------------------------------------------------
+      async function loadSettingsForm() {
+        if (!currentProject) return;
+        const {config} = await fetch(`/api/projects/${currentProject}`).then((r) => r.json());
+
+        document.getElementById("cfg-ollama-url").value = config.ollama_url || "";
+        document.getElementById("cfg-model").value = config.model || "";
+        document.getElementById("cfg-batch-size").value = config.batch_size || 25;
+        document.getElementById("cfg-skip-langs").value = (config.skip_langs || []).join(", ");
+
+        // Master lang select
+        const sel = document.getElementById("cfg-master-lang");
+        sel.innerHTML = Object.entries(config.languages || {})
+          .map(([code, l]) => `<option value="${code}" ${code === config.master_lang ? "selected" : ""}>${l.name || code} (${code})</option>`)
+          .join("");
+
+        // Language list
+        const langList = document.getElementById("settings-lang-list");
+        const langs = Object.values(config.languages || {});
+        if (langs.length === 0) {
+          langList.textContent = "No languages registered.";
+        } else {
+          langList.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:8px">${langs
+            .map(
+              (l) => `<span style="background:var(--surface2);border:1px solid var(--border);padding:4px 12px;border-radius:6px;font-size:12px">
+                                      ${l.is_master ? "⭐ " : ""}${l.name} <code style="color:var(--muted)">(${l.code})</code> <span style="color:var(--muted);font-size:10px">${l.file}</span>
+                                  </span>`,
+            )
+            .join("")}</div>`;
+        }
+      }
+
+      async function saveSettings() {
+        const updates = {
+          master_lang: document.getElementById("cfg-master-lang").value,
+
+          ollama_url: document.getElementById("cfg-ollama-url").value,
+          model: document.getElementById("cfg-model").value,
+          batch_size: parseInt(document.getElementById("cfg-batch-size").value),
+          skip_langs: document
+            .getElementById("cfg-skip-langs")
+            .value.split(",")
+            .map((s) => s.trim())
+            .filter(Boolean),
+        };
+
+        const r = await fetch(`/api/projects/${currentProject}/config`, {
+          method: "PATCH",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify(updates),
+        });
+
+        const alertEl = document.getElementById("settings-alert");
+        if (r.ok) {
+          alertEl.className = "alert alert-success";
+          alertEl.textContent = "✅ Settings saved.";
+          alertEl.style.display = "block";
+          setTimeout(() => (alertEl.style.display = "none"), 3000);
+        } else {
+          alertEl.className = "alert alert-error";
+          alertEl.textContent = "Error saving settings.";
+          alertEl.style.display = "block";
+        }
+      }
+
+      async function testOllama() {
+        const url = document.getElementById("cfg-ollama-url").value;
+        const model = document.getElementById("cfg-model").value;
+        document.getElementById("models-list").textContent = "Connecting...";
+        try {
+          const r = await fetch(`/api/ollama/check?url=${encodeURIComponent(url)}&model=${encodeURIComponent(model)}`);
+          const data = await r.json();
+          if (data.connected) {
+            const modelColor = data.model_available ? "var(--success)" : "var(--warn)";
+            document.getElementById("models-list").innerHTML = `
+                  <div style="margin-bottom:8px;color:var(--success)">✅ Connected to Ollama</div>
+                  <div style="margin-bottom:12px">Model <strong>${model}</strong>: <span style="color:${modelColor}">${data.model_available ? "✅ Available" : "⚠ Not found in list"}</span></div>
+                  <strong style="color:var(--muted);font-size:11px">Available models:</strong><br>
+                  ${[...data.models]
+                    .sort((a, b) => a.localeCompare(b))
+                    .map(
+                      (m) =>
+                        `<span onclick="navigator.clipboard.writeText('${m}');this.querySelector('span').textContent='✅';setTimeout(()=>this.querySelector('span').textContent='⎘',1200)" title="Copy to clipboard" style="cursor:pointer;margin:2px 4px 2px 0;display:inline-flex;align-items:center;gap:5px;background:var(--surface2);padding:2px 8px;border-radius:4px;font-size:12px;font-family:monospace">${m}<span style="font-size:11px;opacity:0.6">⎘</span></span>`,
+                    )
+                    .join("")}
+                `;
+            document.getElementById("cfg-model").value = model;
+          } else {
+            document.getElementById("models-list").innerHTML = `<span style="color:var(--error)">❌ ${data.error || "Connection failed"}</span>`;
+          }
+        } catch (e) {
+          document.getElementById("models-list").innerHTML = `<span style="color:var(--error)">❌ ${e.message}</span>`;
+        }
+      }
+
+      // ---------------------------------------------------------------------------
+      // New language modal
+      // ---------------------------------------------------------------------------
+      function openNewLangModal() {
+        document.getElementById("new-lang-code").value = "";
+        document.getElementById("new-lang-name").value = "";
+        const alertEl = document.getElementById("modal-alert");
+        alertEl.style.display = "none";
+        const overlay = document.getElementById("modal-overlay");
+        overlay.style.display = "flex";
+        document.getElementById("new-lang-code").focus();
+      }
+
+      function closeModal() {
+        document.getElementById("modal-overlay").style.display = "none";
+      }
+
+      async function createLanguage() {
+        const code = document.getElementById("new-lang-code").value.trim().toLowerCase();
+        const name = document.getElementById("new-lang-name").value.trim();
+        const alertEl = document.getElementById("modal-alert");
+
+        if (!code) {
+          alertEl.className = "alert alert-error";
+          alertEl.textContent = "Language code is required.";
+          alertEl.style.display = "block";
+          return;
+        }
+
+        const r = await fetch(`/api/projects/${currentProject}/languages`, {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({code, name: name || undefined}),
+        });
+        const data = await r.json();
+
+        if (r.ok) {
+          closeModal();
+          await loadProjects();
+          await loadSettingsForm();
+          await refreshTranslateStatus();
+          await refreshDashboard();
+        } else {
+          alertEl.className = "alert alert-error";
+          alertEl.textContent = data.detail || "Error creating language.";
+          alertEl.style.display = "block";
+        }
+      }
+
+      // Close modal on overlay click
+      document.getElementById("modal-overlay")?.addEventListener("click", (e) => {
+        if (e.target === e.currentTarget) closeModal();
+      });
+
+      // ---------------------------------------------------------------------------
+      // Ollama status indicator
+      // ---------------------------------------------------------------------------
+      async function checkOllama() {
+        let url = "http://localhost:11434";
+        let model = "gpt-oss:20b";
+        if (currentProject) {
+          try {
+            const cfg = await fetch(`/api/projects/${currentProject}`).then((r) => r.json());
+            url = cfg.config?.ollama_url || url;
+            model = cfg.config?.model || model;
+          } catch {}
+        }
+        const ind = document.getElementById("ollama-indicator");
+        const txt = document.getElementById("ollama-status-text");
+        try {
+          const r = await fetch(`/api/ollama/check?url=${encodeURIComponent(url)}&model=${encodeURIComponent(model)}`);
+          const data = await r.json();
+          if (data.connected) {
+            ind.className = "conn-ok";
+            txt.textContent = data.model_available ? "Ollama · Ready" : "Ollama · No model";
+          } else {
+            ind.className = "conn-fail";
+            txt.textContent = "Ollama · Offline";
+          }
+        } catch {
+          ind.className = "conn-fail";
+          txt.textContent = "Ollama · Offline";
+        }
+      }
+
+      // ---------------------------------------------------------------------------
+      // Navigation
+      // ---------------------------------------------------------------------------
+      function showPage(page, pushState = true) {
+        document.querySelectorAll(".page").forEach((p) => p.classList.remove("active"));
+        document.querySelectorAll(".nav-item").forEach((n) => n.classList.remove("active"));
+        document.getElementById("page-" + page).classList.add("active");
+        document.querySelector(`[data-page="${page}"]`).classList.add("active");
+
+        if (pushState && currentProject) _pushURL(currentProject, page);
+
+        if (page === "translate") refreshTranslateStatus();
+        if (page === "dashboard") refreshDashboard();
+        if (page === "settings") loadSettingsForm();
+      }
+
+      function showGlobalError(msg) {
+        ["dashboard-projects-loading", "translate-projects-loading", "settings-projects-loading"].forEach((id) => {
+          const el = document.getElementById(id);
+          el.className = "alert alert-error";
+          el.textContent = msg;
+          el.style.display = "block";
+        });
+      }
+
+      // Back/forward button support
+      window.addEventListener("popstate", (e) => {
+        const {project, page} = e.state || _readURL();
+        if (project && projects.find((p) => p.name === project) && project !== currentProject) {
+          currentProject = project;
+          ["dash-project-tabs", "trans-project-tabs", "settings-project-tabs"].forEach((id) => {
+            document.querySelectorAll(`#${id} .project-tab`).forEach((t) => {
+              t.classList.toggle("active", t.textContent === project);
+            });
+          });
+        }
+        if (page) showPage(page, false);
+      });
+
+      // Startup — wait for projects to load before first Ollama check so currentProject is set
+      loadProjects().then(() => {
+        checkOllama();
+        setInterval(checkOllama, 30000);
+      });
+    </script>
+  </body>
+</html>
