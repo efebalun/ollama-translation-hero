@@ -73,20 +73,84 @@ def _find_matching_brace(text: str, start: int) -> int:
     return len(text) - 1
 
 
+def _find_matching_bracket(text: str, start: int) -> int:
+    """Return the index of the closing ] matching the [ at start, string-aware."""
+    depth = 0
+    in_str = None
+    i = start
+    while i < len(text):
+        ch = text[i]
+        if in_str:
+            if ch == "\\" and i + 1 < len(text):
+                i += 2
+                continue
+            if ch == in_str:
+                in_str = None
+        else:
+            if ch in ('"', "'", "`"):
+                in_str = ch
+            elif ch == "[":
+                depth += 1
+            elif ch == "]":
+                depth -= 1
+                if depth == 0:
+                    return i
+        i += 1
+    return len(text) - 1
+
+
+def _translate_array_strings(inner: str, prefix: str, translations: dict) -> str:
+    """Replace quoted string elements in a single-line array body with translations."""
+    result = []
+    i = 0
+    index = 0
+    length = len(inner)
+    while i < length:
+        ch = inner[i]
+        if ch in ('"', "'", "`"):
+            quote = ch
+            start = i
+            i += 1
+            while i < length:
+                c = inner[i]
+                if c == "\\" and i + 1 < length:
+                    i += 2
+                    continue
+                if c == quote:
+                    i += 1
+                    break
+                i += 1
+            original = inner[start:i]
+            t = translations.get(f"{prefix}.{index}")
+            if t is not None:
+                esc = (t.replace("\\", "\\\\").replace("\n", "\\n")
+                       .replace("\t", "\\t").replace(quote, f"\\{quote}"))
+                result.append(f"{quote}{esc}{quote}")
+            else:
+                result.append(original)
+            index += 1
+        else:
+            result.append(ch)
+            i += 1
+    return "".join(result)
+
+
 def _translate_lines(body: str, key_stack: list[str], translations: dict) -> str:
     """
     Line-by-line pass. Handles:
     - String values:    key: 'value',
     - Nested objects:   key: {
+    - Arrays:           key: [...] or key: [
     - Comments:         // ...
     - Arrow functions:  key: (x) => `...`
     - Closing braces:   },
+    - Closing brackets: ],
     """
     lines = body.split("\n")
     result = []
-    stack = list(key_stack)  # copy
-
-    # Multi-line string detection not needed – source files are one-liner values
+    stack = list(key_stack)          # object-key path components
+    frame_is_array_item = []         # parallel to stack: True when frame is an array index
+    array_stack = []                 # current numeric index for each open array
 
     for line in lines:
         stripped = line.strip()
@@ -96,10 +160,52 @@ def _translate_lines(body: str, key_stack: list[str], translations: dict) -> str
             result.append(line)
             continue
 
-        # Closing brace (end of nested object)
-        if re.match(r"^\},?$", stripped):
+        # Closing bracket ],  →  array close
+        if re.match(r"^\],?$", stripped):
+            if array_stack:
+                array_stack.pop()
             if stack:
                 stack.pop()
+                if frame_is_array_item:
+                    frame_is_array_item.pop()
+            result.append(line)
+            continue
+
+        # Closing brace },  →  object or array-item close
+        if re.match(r"^\},?$", stripped):
+            was_array_item = frame_is_array_item.pop() if frame_is_array_item else False
+            if stack:
+                stack.pop()
+            if was_array_item and array_stack:
+                array_stack[-1] += 1
+            result.append(line)
+            continue
+
+        # Array: key: [...] single-line  OR  key: [  multi-line
+        arr_open = re.match(r"^(\s*)(\w+|'[^']+'|\"[^\"]+\")\s*:\s*\[", line)
+        if arr_open:
+            key_raw = arr_open.group(2).strip("'\"")
+            bracket_pos = line.index("[", arr_open.start())
+            close_pos = _find_matching_bracket(line, bracket_pos)
+            if close_pos < len(line) - 1:
+                # Single-line array: translate string elements inline
+                arr_prefix = ".".join(stack + [key_raw])
+                inner = line[bracket_pos + 1:close_pos]
+                new_inner = _translate_array_strings(inner, arr_prefix, translations)
+                result.append(f"{line[:bracket_pos + 1]}{new_inner}{line[close_pos:]}")
+            else:
+                # Multi-line array: push key, start index tracking
+                stack.append(key_raw)
+                frame_is_array_item.append(False)
+                array_stack.append(0)
+                result.append(line)
+            continue
+
+        # Array item opener: lone { on a line inside an array
+        if stripped == "{" and array_stack:
+            idx = array_stack[-1]
+            stack.append(str(idx))
+            frame_is_array_item.append(True)
             result.append(line)
             continue
 
@@ -128,8 +234,33 @@ def _translate_lines(body: str, key_stack: list[str], translations: dict) -> str
         obj_open = re.match(r"^(\s*)(\w+|'[^']+'|\"[^\"]+\")\s*:\s*\{", line)
         if obj_open:
             key_raw = obj_open.group(2).strip("'\"")
-            stack.append(key_raw)
-            result.append(line)
+            brace_pos = line.index('{', obj_open.start())
+            close_pos = _find_matching_brace(line, brace_pos)
+            if close_pos >= len(line) - 1:
+                # Multi-line object — push key to stack
+                stack.append(key_raw)
+                frame_is_array_item.append(False)
+                result.append(line)
+            else:
+                # Single-line object (e.g. contains arrow functions with template literals)
+                # Substitute simple string values inline; do NOT push to stack
+                obj_prefix = ".".join(stack + [key_raw])
+                inner_text = line[brace_pos + 1:close_pos]
+                def _sub_inline(m, _prefix=obj_prefix):
+                    ik = m.group(1)
+                    q  = m.group(2)
+                    t  = translations.get(f"{_prefix}.{ik}")
+                    if t is not None:
+                        esc = (t.replace("\\", "\\\\").replace("\n", "\\n")
+                               .replace("\t", "\\t").replace(q, f"\\{q}"))
+                        return f'{ik}: {q}{esc}{q}'
+                    return m.group(0)
+                new_inner = re.sub(
+                    r"(\w+)\s*:\s*(['\"`])((?:[^'\"`\\]|\\.)*)\2",
+                    _sub_inline, inner_text
+                )
+                suffix = line[close_pos:]
+                result.append(f"{line[:brace_pos + 1]}{new_inner}{suffix}")
             continue
 
         # String value:  key: 'value',   or   key: "value",   or   key: `value`,
@@ -189,7 +320,7 @@ def _translate_lines(body: str, key_stack: list[str], translations: dict) -> str
                     result.append(line)
                 continue
 
-        # Everything else (booleans, numbers, arrays, multi-param fns) – keep verbatim
+        # Everything else (booleans, numbers, multi-param fns) – keep verbatim
         result.append(line)
 
     return "\n".join(result)

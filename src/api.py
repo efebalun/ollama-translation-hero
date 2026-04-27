@@ -329,12 +329,24 @@ async def _run_translation(
         "error": None,
     })
 
+    # Determine output path up front (needed for incremental writes)
+    languages = cfg.get("languages", {})
+    lang_info = languages.get(lang_code, {})
+    master_path = Path(master_file)
+    lang_filename = lang_info.get("file", f"{lang_code}{master_path.suffix}")
+    from project_config import get_languages_dir
+    lang_dir = get_languages_dir(project_name)
+    target_path = lang_dir / lang_filename
+
     try:
         async def on_progress(done_in_batch: int, total_in_batch: int, batch_result: dict):
             nonlocal done_so_far
             done_so_far = len(already_translated) + done_in_batch
             update_translated_keys(project_dir, lang_code, batch_result)
             update_progress(project_dir, lang_code, done_so_far, total)
+            # Incremental write: update the output file after every batch
+            current_translations = get_lang_state(project_dir, lang_code).get("translated", {})
+            write_output_file(master_file, str(target_path), current_translations, lang_code)
 
         if pending:
             new_translations = await translate_batch(
@@ -353,15 +365,7 @@ async def _run_translation(
         if pending:
             final_translations.update(new_translations)
 
-        # Auto-write output file
-        languages = cfg.get("languages", {})
-        lang_info = languages.get(lang_code, {})
-        master_path = Path(master_file)
-        lang_filename = lang_info.get("file", f"{lang_code}{master_path.suffix}")
-        from project_config import get_languages_dir
-        lang_dir = get_languages_dir(project_name)
-        target_path = lang_dir / lang_filename
-
+        # Auto-write final output file
         write_output_file(master_file, str(target_path), final_translations, lang_code)
 
         update_lang_state(project_dir, lang_code, {
@@ -477,6 +481,62 @@ async def api_diff(project_name: str):
             "total_keys": len(master_keys),
         }
     return result
+
+
+@app.post("/api/projects/{project_name}/check-clones/{lang_code}")
+async def api_check_clones(project_name: str, lang_code: str):
+    """
+    Compare translated values for a language with the master language values.
+    Checks BOTH the persisted state and the actual language file on disk.
+    Remove any keys from state where the translated value exactly matches the master value
+    (indicating the translation failed and just cloned the original).
+    """
+    master_file = get_master_file(project_name)
+    if not master_file or not master_file.exists():
+        raise HTTPException(404, "Master file not found")
+
+    cfg = load_project_config(project_name)
+    if lang_code == cfg.get("master_lang"):
+        raise HTTPException(400, "Cannot check clones for master language")
+
+    master_flat = parse_file(str(master_file))
+    # Only consider string values for clone detection
+    master_values = {k: v for k, v in master_flat.items() if isinstance(v, str)}
+
+    project_dir = str(get_project_dir(project_name))
+    state = get_lang_state(project_dir, lang_code)
+    translated = state.get("translated", {})
+
+    # 1. Check clones in state
+    state_clones = {k for k, v in translated.items() if k in master_values and v == master_values[k]}
+
+    # 2. Check clones in the actual language file on disk
+    lang_dir = get_languages_dir(project_name)
+    lang_info = cfg.get("languages", {}).get(lang_code, {})
+    lang_filename = lang_info.get("file", f"{lang_code}{master_file.suffix}")
+    lang_file = lang_dir / lang_filename
+
+    file_clones: set[str] = set()
+    if lang_file.exists():
+        try:
+            file_flat = parse_file(str(lang_file))
+            file_values = {k: v for k, v in file_flat.items() if isinstance(v, str)}
+            file_clones = {k for k, v in file_values.items() if k in master_values and v == master_values[k]}
+        except Exception:
+            pass
+
+    # Combine clones from both state and file
+    all_clones = sorted(state_clones | file_clones)
+
+    # Remove from state any that are present there
+    if state_clones:
+        new_translated = {k: v for k, v in translated.items() if k not in state_clones}
+        update_lang_state(project_dir, lang_code, {
+            "translated": new_translated,
+            "progress": {"done": len(new_translated), "total": len(master_values)},
+        })
+
+    return {"removed": len(state_clones), "keys": all_clones}
 
 
 # ---------------------------------------------------------------------------

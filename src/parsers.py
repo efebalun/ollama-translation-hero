@@ -77,57 +77,61 @@ def _extract_object_body(text: str) -> str:
 
 
 def _parse_object_text(text: str, prefix: str) -> dict[str, Any]:
-    """Recursively parse TS/JS object literal text into flat dotted keys."""
+    """Iteratively parse TS/JS object literal text into flat dotted keys.
+    Uses an explicit stack to avoid recursion limits on deeply nested objects."""
     result: dict[str, Any] = {}
 
-    # Tokenise into key: value pairs at the current nesting level
-    i = 0
-    text = text.strip()
-    length = len(text)
+    # Stack of (text_segment, prefix) to process
+    stack: list[tuple[str, str]] = [(text.strip(), prefix)]
 
-    while i < length:
-        # Skip whitespace and comments
-        i = _skip_whitespace_and_comments(text, i)
-        if i >= length:
-            break
+    while stack:
+        seg, pre = stack.pop()
+        i = 0
+        length = len(seg)
 
-        # Read key
-        key, i = _read_key(text, i)
-        if key is None:
-            break
+        while i < length:
+            # Skip whitespace and comments
+            i = _skip_whitespace_and_comments(seg, i)
+            if i >= length:
+                break
 
-        # Skip whitespace + colon
-        i = _skip_whitespace_and_comments(text, i)
-        if i < length and text[i] == ":":
-            i += 1
-        i = _skip_whitespace_and_comments(text, i)
+            # Read key
+            key, i = _read_key(seg, i)
+            if key is None:
+                break
 
-        full_key = f"{prefix}.{key}" if prefix else key
+            # Skip whitespace + colon
+            i = _skip_whitespace_and_comments(seg, i)
+            if i < length and seg[i] == ":":
+                i += 1
+            i = _skip_whitespace_and_comments(seg, i)
 
-        # Determine value type
-        val, i, val_type = _read_value(text, i)
+            full_key = f"{pre}.{key}" if pre else key
 
-        if val_type == "object":
-            # Recurse into nested object
-            nested = _parse_object_text(val, full_key)
-            result.update(nested)
-        elif val_type == "function":
-            # Store params and body separately; body will be sent to the translator
-            idx = val.find("=>")
-            if idx != -1:
-                params = val[:idx + 2].rstrip()   # e.g. "(name: string) =>"
-                body   = val[idx + 2:].lstrip()   # e.g. "`text with ${name}`"
-            else:
-                params, body = "", val
-            result[full_key] = {"__type__": "function", "params": params, "body": body}
-        elif val_type == "string":
-            result[full_key] = val
-        # Skip other types (numbers, booleans, null, arrays of non-strings)
+            # Determine value type
+            val, i, val_type = _read_value(seg, i)
 
-        # Skip trailing comma
-        i = _skip_whitespace_and_comments(text, i)
-        if i < length and text[i] == ",":
-            i += 1
+            if val_type == "object":
+                # Push nested object onto stack for later processing
+                stack.append((val, full_key))
+            elif val_type == "function":
+                idx = val.find("=>")
+                if idx != -1:
+                    params = val[:idx + 2].rstrip()
+                    body   = val[idx + 2:].lstrip()
+                else:
+                    params, body = "", val
+                result[full_key] = {"__type__": "function", "params": params, "body": body}
+            elif val_type == "array":
+                _parse_array_body(val, full_key, result, stack)
+            elif val_type == "string":
+                result[full_key] = val
+            # Skip other types
+
+            # Skip trailing comma
+            i = _skip_whitespace_and_comments(seg, i)
+            if i < length and seg[i] == ",":
+                i += 1
 
     return result
 
@@ -204,11 +208,66 @@ def _read_value(text: str, i: int) -> tuple[Any, int, str]:
         fn_src, i = _extract_arrow_function(text, i)
         return fn_src, i, "function"
 
+    # Array literal
+    if ch == "[":
+        body, i = _read_balanced(text, i, "[", "]")
+        return body[1:-1], i, "array"
+
     # true / false / number  – skip
     start = i
     while i < length and text[i] not in (",", "\n", "}"):
         i += 1
     return text[start:i].strip(), i, "other"
+
+
+def _parse_array_body(array_text: str, prefix: str, result: dict, stack: list) -> None:
+    """Parse array body (without outer brackets) into dotted keys with numeric indices."""
+    i = 0
+    length = len(array_text)
+    index = 0
+
+    while i < length:
+        i = _skip_whitespace_and_comments(array_text, i)
+        if i >= length:
+            break
+
+        ch = array_text[i]
+
+        if ch == ",":
+            i += 1
+            continue
+
+        item_key = f"{prefix}.{index}"
+
+        if ch in ('"', "'", "`"):
+            val, i = _read_string(array_text, i)
+            result[item_key] = val
+            index += 1
+        elif ch == "{":
+            body, i = _read_balanced(array_text, i, "{", "}")
+            stack.append((body[1:-1].strip(), item_key))
+            index += 1
+        elif ch == "(":
+            fn_src, i = _extract_arrow_function(array_text, i)
+            idx = fn_src.find("=>")
+            if idx != -1:
+                params = fn_src[:idx + 2].rstrip()
+                body = fn_src[idx + 2:].lstrip()
+            else:
+                params, body = "", fn_src
+            result[item_key] = {"__type__": "function", "params": params, "body": body}
+            index += 1
+        elif ch == "[":
+            # Nested array — recurse
+            body, i = _read_balanced(array_text, i, "[", "]")
+            _parse_array_body(body[1:-1], item_key, result, stack)
+            index += 1
+        else:
+            # Number, boolean, identifier — skip
+            start = i
+            while i < length and array_text[i] not in (",", "\n", "]", "}"):
+                i += 1
+            index += 1
 
 
 def _read_string(text: str, i: int) -> tuple[str, int]:
@@ -380,28 +439,37 @@ def _write_json(source: Path, target: Path, translations: dict[str, str]) -> Non
 
 
 def _flatten_dict(data: dict, prefix: str) -> dict[str, Any]:
-    result = {}
-    for key, val in data.items():
-        full_key = f"{prefix}.{key}" if prefix else key
-        if isinstance(val, dict):
-            result.update(_flatten_dict(val, full_key))
-        elif isinstance(val, str):
-            result[full_key] = val
-        else:
-            result[full_key] = val
+    """Iteratively flatten a nested dict into dotted keys."""
+    result: dict[str, Any] = {}
+    stack: list[tuple[dict, str]] = [(data, prefix)]
+    while stack:
+        current, pre = stack.pop()
+        for key, val in current.items():
+            full_key = f"{pre}.{key}" if pre else key
+            if isinstance(val, dict):
+                stack.append((val, full_key))
+            elif isinstance(val, str):
+                result[full_key] = val
+            else:
+                result[full_key] = val
     return result
 
 
 def _apply_translations_nested(data: dict, prefix: str, translations: dict[str, str]) -> dict:
-    result = {}
-    for key, val in data.items():
-        full_key = f"{prefix}.{key}" if prefix else key
-        if isinstance(val, dict):
-            result[key] = _apply_translations_nested(val, full_key, translations)
-        elif isinstance(val, str):
-            result[key] = translations.get(full_key, val)
-        else:
-            result[key] = val
+    """Iteratively apply translations to a nested dict."""
+    result: dict = {}
+    stack: list[tuple[dict, str, dict]] = [(data, prefix, result)]
+    while stack:
+        current, pre, out = stack.pop()
+        for key, val in current.items():
+            full_key = f"{pre}.{key}" if pre else key
+            if isinstance(val, dict):
+                out[key] = {}
+                stack.append((val, full_key, out[key]))
+            elif isinstance(val, str):
+                out[key] = translations.get(full_key, val)
+            else:
+                out[key] = val
     return result
 
 

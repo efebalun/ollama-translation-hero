@@ -1,8 +1,10 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0" />
     <title>TranslationHero</title>
     <style>
       :root {
@@ -457,19 +459,32 @@
           <small>Ollama · Local · Fast</small>
         </div>
         <div class="nav-section">Workspace</div>
-        <div class="nav-item active" data-page="dashboard" onclick="showPage('dashboard')">
+        <div
+          class="nav-item active"
+          data-page="dashboard"
+          onclick="showPage('dashboard')">
           <span class="icon">⚡</span><span class="label">Dashboard</span>
         </div>
-        <div class="nav-item" data-page="translate" onclick="showPage('translate')">
+        <div
+          class="nav-item"
+          data-page="translate"
+          onclick="showPage('translate')">
           <span class="icon">🌐</span><span class="label">Translate</span>
         </div>
-        <div class="nav-item" data-page="settings" onclick="showPage('settings')">
+        <div
+          class="nav-item"
+          data-page="settings"
+          onclick="showPage('settings')">
           <span class="icon">⚙️</span><span class="label">Settings</span>
         </div>
         <div style="flex: 1"></div>
         <div style="padding: 12px 16px; border-top: 1px solid var(--border)">
-          <div id="ollama-indicator" class="conn-checking">
-            <span class="status-dot" style="background: currentColor; width: 6px; height: 6px; border-radius: 50%; display: inline-block"></span>
+          <div
+            id="ollama-indicator"
+            class="conn-checking">
+            <span
+              class="status-dot"
+              style="background: currentColor; width: 6px; height: 6px; border-radius: 50%; display: inline-block"></span>
             <span id="ollama-status-text">Checking...</span>
           </div>
         </div>
@@ -477,15 +492,27 @@
       <!-- MAIN -->
       <main class="main">
         <!-- DASHBOARD -->
-        <div id="page-dashboard" class="page active">
-          <div class="project-tabs" id="dash-project-tabs"></div>
+        <div
+          id="page-dashboard"
+          class="page active">
+          <div
+            class="project-tabs"
+            id="dash-project-tabs"></div>
           <div class="page-header">
             <h2>Dashboard</h2>
             <p>Overview of all projects and translation progress</p>
           </div>
-          <div id="dashboard-projects-loading" class="alert alert-info">Loading projects...</div>
-          <div id="dashboard-content" style="display: none">
-            <div class="stats-row" id="dash-stats"></div>
+          <div
+            id="dashboard-projects-loading"
+            class="alert alert-info">
+            Loading projects...
+          </div>
+          <div
+            id="dashboard-content"
+            style="display: none">
+            <div
+              class="stats-row"
+              id="dash-stats"></div>
             <div class="card">
               <div class="card-title">Languages</div>
               <div class="table-wrap">
@@ -500,30 +527,55 @@
                       <th>Actions</th>
                     </tr>
                   </thead>
-                  <tbody id="dash-lang-table">
-                  </tbody>
+                  <tbody id="dash-lang-table"></tbody>
                 </table>
               </div>
             </div>
           </div>
         </div>
         <!-- TRANSLATE -->
-        <div id="page-translate" class="page">
-          <div class="project-tabs" id="trans-project-tabs"></div>
+        <div
+          id="page-translate"
+          class="page">
+          <div
+            class="project-tabs"
+            id="trans-project-tabs"></div>
           <div class="page-header">
             <h2>Translate</h2>
             <p>Run translations for individual languages or the whole project</p>
           </div>
-          <div id="translate-projects-loading" class="alert alert-info">Loading projects...</div>
-          <div id="translate-content" style="display: none">
-            <div class="flex-between" style="margin-bottom: 16px">
+          <div
+            id="translate-projects-loading"
+            class="alert alert-info">
+            Loading projects...
+          </div>
+          <div
+            id="translate-content"
+            style="display: none">
+            <div
+              class="flex-between"
+              style="margin-bottom: 16px">
               <div class="flex gap-8">
-                <button class="btn btn-primary" onclick="translateAll()">▶ Translate All Pending</button>
-                <button class="btn btn-secondary" onclick="refreshTranslateStatus()">↻ Refresh</button>
+                <button
+                  class="btn btn-primary"
+                  onclick="translateAll()">
+                  ▶ Translate All Pending
+                </button>
+                <button
+                  class="btn btn-secondary"
+                  onclick="refreshTranslateStatus()">
+                  ↻ Refresh
+                </button>
               </div>
               <div class="flex gap-8">
                 <label style="margin: 0; color: var(--text)">Batch size:</label>
-                <input id="batch-size-input" type="number" value="25" min="5" max="100" style="width: 70px" />
+                <input
+                  id="batch-size-input"
+                  type="number"
+                  value="25"
+                  min="5"
+                  max="100"
+                  style="width: 70px" />
               </div>
             </div>
             <div class="card">
@@ -539,25 +591,38 @@
                       <th>Actions</th>
                     </tr>
                   </thead>
-                  <tbody id="trans-lang-table">
-                  </tbody>
+                  <tbody id="trans-lang-table"></tbody>
                 </table>
               </div>
             </div>
           </div>
         </div>
         <!-- SETTINGS -->
-        <div id="page-settings" class="page">
-          <div class="project-tabs" id="settings-project-tabs"></div>
+        <div
+          id="page-settings"
+          class="page">
+          <div
+            class="project-tabs"
+            id="settings-project-tabs"></div>
           <div class="page-header">
             <h2>Settings</h2>
             <p>Configure project settings, master language, and Ollama connection</p>
           </div>
-          <div id="settings-projects-loading" class="alert alert-info">Loading projects...</div>
-          <div id="settings-content" style="display: none">
-            <div class="card" id="settings-form-card">
+          <div
+            id="settings-projects-loading"
+            class="alert alert-info">
+            Loading projects...
+          </div>
+          <div
+            id="settings-content"
+            style="display: none">
+            <div
+              class="card"
+              id="settings-form-card">
               <div class="card-title">Project Configuration</div>
-              <div id="settings-alert" style="display: none"></div>
+              <div
+                id="settings-alert"
+                style="display: none"></div>
               <div class="form-row">
                 <div>
                   <label>Master Language (reference file)</label>
@@ -565,66 +630,124 @@
                 </div>
                 <div>
                   <label>Skip Languages (comma-separated codes)</label>
-                  <input id="cfg-skip-langs" type="text" placeholder="e.g. en,ar" />
+                  <input
+                    id="cfg-skip-langs"
+                    type="text"
+                    placeholder="e.g. en,ar" />
                 </div>
               </div>
               <div class="form-row">
                 <div>
                   <label>Ollama URL</label>
-                  <input id="cfg-ollama-url" type="text" placeholder="http://localhost:11434" oninput="" />
+                  <input
+                    id="cfg-ollama-url"
+                    type="text"
+                    placeholder="http://localhost:11434"
+                    oninput="" />
                 </div>
                 <div>
                   <label>Model</label>
-                  <input id="cfg-model" type="text" placeholder="gpt-oss:20b" />
+                  <input
+                    id="cfg-model"
+                    type="text"
+                    placeholder="gpt-oss:20b" />
                 </div>
               </div>
               <div class="form-row">
                 <div>
                   <label>Batch Size (keys per request)</label>
-                  <input id="cfg-batch-size" type="number" min="5" max="100" value="25" />
+                  <input
+                    id="cfg-batch-size"
+                    type="number"
+                    min="5"
+                    max="100"
+                    value="25" />
                 </div>
                 <div></div>
               </div>
               <div class="flex gap-8">
-                <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
-                <button class="btn btn-secondary" onclick="testOllama()">Test Connection</button>
+                <button
+                  class="btn btn-primary"
+                  onclick="saveSettings()">
+                  Save Settings
+                </button>
+                <button
+                  class="btn btn-secondary"
+                  onclick="testOllama()">
+                  Test Connection
+                </button>
               </div>
             </div>
             <div class="card">
               <div class="card-title">Available Models</div>
-              <div id="models-list" style="color: var(--muted); font-size: 13px">Click "Test Connection" to load available models.</div>
+              <div
+                id="models-list"
+                style="color: var(--muted); font-size: 13px">
+                Click "Test Connection" to load available models.
+              </div>
             </div>
             <div class="card">
-              <div class="flex-between" style="margin-bottom: 14px">
-                <div class="card-title" style="margin: 0">Languages in Project</div>
-                <button class="btn btn-primary btn-sm" onclick="openNewLangModal()">+ New Language</button>
+              <div
+                class="flex-between"
+                style="margin-bottom: 14px">
+                <div
+                  class="card-title"
+                  style="margin: 0">
+                  Languages in Project
+                </div>
+                <button
+                  class="btn btn-primary btn-sm"
+                  onclick="openNewLangModal()">
+                  + New Language
+                </button>
               </div>
-              <div id="settings-lang-list" style="color: var(--muted); font-size: 13px">Loading...</div>
+              <div
+                id="settings-lang-list"
+                style="color: var(--muted); font-size: 13px">
+                Loading...
+              </div>
             </div>
           </div>
         </div>
       </main>
     </div>
     <!-- NEW LANGUAGE MODAL -->
-    <div id="modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.65); z-index: 100; align-items: center; justify-content: center">
+    <div
+      id="modal-overlay"
+      style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.65); z-index: 100; align-items: center; justify-content: center">
       <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; width: 380px; max-width: 95vw">
         <h3 style="margin-bottom: 18px; font-size: 16px">Add New Language</h3>
-        <div id="modal-alert" style="display: none; margin-bottom: 12px"></div>
+        <div
+          id="modal-alert"
+          style="display: none; margin-bottom: 12px"></div>
         <div style="margin-bottom: 14px">
-          <label>
-            Language Code <span style="color: var(--muted); font-size: 11px">(e.g. de, es, zh)</span>
-          </label>
-          <input id="new-lang-code" type="text" placeholder="de" maxlength="10" style="margin-top: 5px" />
+          <label> Language Code <span style="color: var(--muted); font-size: 11px">(e.g. de, es, zh)</span> </label>
+          <input
+            id="new-lang-code"
+            type="text"
+            placeholder="de"
+            maxlength="10"
+            style="margin-top: 5px" />
         </div>
         <div style="margin-bottom: 20px">
-          <label>
-            Language Name <span style="color: var(--muted); font-size: 11px">(optional — auto-detected from code)</span>
-          </label>
-          <input id="new-lang-name" type="text" placeholder="German" style="margin-top: 5px" />
+          <label> Language Name <span style="color: var(--muted); font-size: 11px">(optional — auto-detected from code)</span> </label>
+          <input
+            id="new-lang-name"
+            type="text"
+            placeholder="German"
+            style="margin-top: 5px" />
         </div>
         <div class="flex gap-8">
-          <button class="btn btn-primary" onclick="createLanguage()">Create</button>
-          <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+          <button
+            class="btn btn-primary"
+            onclick="createLanguage()">
+            Create
+          </button>
+          <button
+            class="btn btn-secondary"
+            onclick="closeModal()">
+            Cancel
+          </button>
         </div>
       </div>
     </div>
@@ -696,12 +819,7 @@
       // ---------------------------------------------------------------------------
       function renderProjectTabs(containerId, onSelect) {
         const container = document.getElementById(containerId);
-        container.innerHTML = "Projects: " + projects
-          .map(
-            (p) =>
-              `<div class="project-tab btn btn-sm ${p.name === currentProject ? "btn-primary" : "btn-secondary"}" onclick="selectProject('${p.name}', '${containerId}', arguments[0])">${p.name}</div>`,
-          )
-          .join("");
+        container.innerHTML = "Projects: " + projects.map((p) => `<div class="project-tab btn btn-sm ${p.name === currentProject ? "btn-primary" : "btn-secondary"}" onclick="selectProject('${p.name}', '${containerId}', arguments[0])">${p.name}</div>`).join("");
       }
 
       function selectProject(name, tabsId, e) {
@@ -800,12 +918,12 @@
                   <div class="flex gap-8">
                     ${
                       lang.status === "done" && newKeys === 0
-                        ? `<button class="btn btn-secondary btn-sm" onclick="writeOutput('${code}', '${(lang.name || code).replace(/'/g, "\\'")}')" >💾 Write</button>`
+                        ? `<button class="btn btn-secondary btn-sm" onclick="writeOutput('${code}', '${(lang.name || code).replace(/'/g, "\\'")}')" >💾 Write</button><button class="btn btn-secondary btn-sm" onclick="checkClones('${code}', '${(lang.name || code).replace(/'/g, "\\'")}')" title="Remove keys that match master (failed translations)">🔍 Check</button>`
                         : lang.status === "running"
                           ? `<button class="btn btn-danger btn-sm" onclick="stopLang('${code}')">⏹ Stop</button>`
                           : newKeys > 0
-                            ? `<button class="btn btn-primary btn-sm" onclick="translateLang('${code}')">⟳ Sync ${newKeys} new</button>`
-                            : `<button class="btn btn-primary btn-sm" onclick="translateLang('${code}')">▶ Translate</button>`
+                            ? `<button class="btn btn-primary btn-sm" onclick="translateLang('${code}')">⟳ Sync ${newKeys} new</button><button class="btn btn-secondary btn-sm" onclick="checkClones('${code}', '${(lang.name || code).replace(/'/g, "\\'")}')" title="Remove keys that match master (failed translations)">🔍 Check</button>`
+                            : `<button class="btn btn-primary btn-sm" onclick="translateLang('${code}')">▶ Translate</button><button class="btn btn-secondary btn-sm" onclick="checkClones('${code}', '${(lang.name || code).replace(/'/g, "\\'")}')" title="Remove keys that match master (failed translations)">🔍 Check</button>`
                     }
                     ${lang.error ? `<span style="color:var(--error);font-size:11px" title="${lang.error}">⚠ Error</span>` : ""}
                   </div>
@@ -873,6 +991,7 @@
                 <td>
                   <div class="flex gap-8">
                     ${lang.status === "running" ? `<button class="btn btn-danger btn-sm" onclick="stopLang('${code}')">⏹ Stop</button>` : newKeys > 0 ? `<button class="btn btn-primary btn-sm" onclick="translateLang('${code}')">⟳ Sync ${newKeys} new</button>` : `<button class="btn btn-primary btn-sm" onclick="translateLang('${code}')">▶ ${lang.translated_keys > 0 ? "Resume" : "Start"}</button>`}
+                    <button class="btn btn-secondary btn-sm" onclick="checkClones('${code}', '${(lang.name || code).replace(/'/g, "\\'")}')" title="Remove keys that match master (failed translations)">🔍 Check</button>
                     <button class="btn btn-secondary btn-sm" onclick="writeOutput('${code}', '${(lang.name || code).replace(/'/g, "\\'")}')" >💾 Write</button>
                     <button class="btn btn-danger btn-sm" onclick="resetLang('${code}', '${(lang.name || code).replace(/'/g, "\\'")}')" >🗑 Reset</button>
                   </div>
@@ -937,6 +1056,35 @@
           refreshTranslateStatus();
           refreshDashboard();
         }, 300);
+      }
+
+      async function checkClones(code, name) {
+        const displayName = name || code;
+        if (!confirm(`Check cloned values for "${displayName}" (${code})?\n\nThis will compare each translated value with the master language and remove any that are identical (failed translations). They will then appear as "new" keys to be re-translated.`)) return;
+        try {
+          const r = await fetch(`/api/projects/${currentProject}/check-clones/${code}`, {method: "POST"});
+          const data = await r.json();
+          if (r.ok) {
+            const stateRemoved = data.removed || 0;
+            const fileClones = (data.keys || []).filter((k) => !data.state_clone_keys || !data.state_clone_keys.includes(k));
+            const totalFound = (data.keys || []).length;
+            if (stateRemoved > 0 && totalFound > stateRemoved) {
+              alert(`✅ Removed ${stateRemoved} cloned key(s) from state.\n\n⚠️ ${totalFound - stateRemoved} additional key(s) in the output file still match master (write may be broken):\n${(data.keys || []).slice(0, 10).join("\n")}${totalFound > 10 ? `\n...and ${totalFound - 10} more` : ""}\n\nFix: click Write to regenerate the output file.`);
+            } else if (stateRemoved > 0) {
+              alert(`✅ Removed ${stateRemoved} cloned key(s) from state.\n\nRe-translate to sync them.`);
+            } else if (totalFound > 0) {
+              alert(`⚠️ Found ${totalFound} key(s) in the output file that still match master (not translated):\n${(data.keys || []).slice(0, 10).join("\n")}${totalFound > 10 ? `\n...and ${totalFound - 10} more` : ""}\n\nFix: click Write to regenerate the output file from state.`);
+            } else {
+              alert(`✅ No cloned values found. All translations look good!`);
+            }
+            refreshTranslateStatus();
+            refreshDashboard();
+          } else {
+            alert(`Error: ${data.detail}`);
+          }
+        } catch (e) {
+          alert("Error checking clones: " + e.message);
+        }
       }
 
       async function writeOutput(code, name) {

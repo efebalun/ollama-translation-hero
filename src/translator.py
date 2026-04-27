@@ -6,6 +6,8 @@ Sends N keys at a time to avoid context limits.
 import asyncio
 import json
 import re
+from datetime import datetime
+from pathlib import Path
 import httpx
 from typing import Any
 
@@ -93,7 +95,16 @@ Output (valid JSON only):"""
                 )
                 response.raise_for_status()
                 data = response.json()
-                raw_text = data.get("response", "")
+                raw_text = data.get("response") or data.get("thinking", "")
+
+            _log_ollama_response(
+                data=data,
+                raw_text=raw_text,
+                source_lang=source_lang,
+                target_lang=target_lang,
+                model=model,
+                ollama_url=ollama_url,
+            )
 
             translated_map = _parse_json_response(raw_text)
             if not translated_map:
@@ -107,16 +118,14 @@ Output (valid JSON only):"""
                 if translated and isinstance(translated, str):
                     result[key] = translated
                 else:
-                    # Fall back to source text if translation missing
-                    result[key] = item["text"]
+                    raise ValueError(f"Model did not return a translation for key '{item['key']}'")
             return result
 
         except (httpx.HTTPError, ValueError, KeyError) as e:
             if attempt < retries - 1:
                 await asyncio.sleep(2 ** attempt)
             else:
-                # On final failure, return source texts unchanged
-                return {k: v for k, v in chunk}
+                raise RuntimeError(f"Translation failed after {retries} attempts: {e}") from e
 
     return {k: v for k, v in chunk}
 
@@ -141,7 +150,65 @@ def _parse_json_response(text: str) -> dict:
         except json.JSONDecodeError:
             pass
 
+    # Fallback: parse numbered translation lines such as "1": "source" -> "target"
+    fallback = _parse_numbered_translation_lines(text)
+    if fallback:
+        return fallback
+
     return {}
+
+
+def _parse_numbered_translation_lines(text: str) -> dict[str, str]:
+    result: dict[str, str] = {}
+    for match in re.finditer(
+        r'"(\d+)"\s*:\s*"((?:\\.|[^"\\])*)"\s*->\s*"((?:\\.|[^"\\])*)"',
+        text,
+    ):
+        index = match.group(1)
+        translated_text = match.group(3)
+        try:
+            translated_text = json.loads(f'"{translated_text}"')
+        except json.JSONDecodeError:
+            translated_text = translated_text.replace('\\"', '"')
+        result[index] = translated_text
+    return result
+
+
+def _log_ollama_response(
+    data: dict[str, Any],
+    raw_text: str,
+    source_lang: str,
+    target_lang: str,
+    model: str,
+    ollama_url: str,
+) -> None:
+    """Append full Ollama request/response details to a log file."""
+    log_dir = Path(__file__).parent.parent / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_file = log_dir / "ollama.log"
+    timestamp = datetime.now().isoformat(sep=" ", timespec="seconds")
+    separator = "=" * 120
+    entry = [
+        separator,
+        f"[{timestamp}] Ollama request",
+        f"Source language: {source_lang}",
+        f"Target language: {target_lang}",
+        f"Model: {model}",
+        f"Ollama URL: {ollama_url}",
+        "Full response JSON:",
+    ]
+    try:
+        entry.append(json.dumps(data, ensure_ascii=False, indent=2))
+    except Exception:
+        entry.append(repr(data))
+    entry.extend([
+        "Raw response text:",
+        raw_text,
+        separator,
+        "\n",
+    ])
+    with log_file.open("a", encoding="utf-8") as f:
+        f.write("\n".join(entry))
 
 
 async def check_ollama_connection(ollama_url: str, model: str) -> dict:

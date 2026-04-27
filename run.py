@@ -21,7 +21,7 @@ import uvicorn
 
 def main():
     parser = argparse.ArgumentParser(description="TranslationHero server")
-    parser.add_argument("--host", default="127.0.0.1", help="Bind host (default: 127.0.0.1)")
+    parser.add_argument("--host", default="0.0.0.0", help="Bind host (default: 0.0.0.0)")
     parser.add_argument("--port", type=int, default=7979, help="Port (default: 7979)")
     parser.add_argument("--reload", action="store_true", default=True,
                         help="Hot-reload on Python changes (default: on)")
